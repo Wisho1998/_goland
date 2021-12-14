@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	myPackage "github.com/Wisho1998/accessModifiers"
+	"github.com/Wisho1998/testAccessModifier/myPackage"
 	"math/rand"
 	"time"
 )
@@ -11,6 +11,12 @@ func getRandom() int {
 	min := 1
 	max := 100
 	return rand.Intn(max-min) + min
+}
+
+// Increase receive an int pointer type
+func increase(v *int) {
+	// dereference v to obtain its value
+	*v++
 }
 
 func main() {
@@ -76,6 +82,7 @@ func main() {
 		fmt.Printf("IF | %d is Odd\n", number1)
 
 	}
+
 	//SWITCH1
 	number2 := getRandom()
 	switch modulo2 := number2 % 2; modulo2 {
@@ -84,6 +91,7 @@ func main() {
 	default:
 		fmt.Printf("SWITCH1 | %d is Odd\n", number2)
 	}
+
 	//SWITCH2
 	number3 := getRandom()
 	switch {
@@ -95,18 +103,24 @@ func main() {
 		fmt.Printf("SWITCH2 | %d is Greater than %d\n", number3, 50)
 	}
 
-	// STRUCTS
-	myStruct := myPackage.MyStructPublic{}
+	// STRUCTS and ACCESS MODIFIERS
+	var myStruct myPackage.MyStructPublic
+	myStruct.Name = "Lorena"
+	myStruct.Age = 24
 	fmt.Println("STRUCTS", myStruct)
 
 	// POINTERS https://ed.team/blog/que-son-los-punteros-en-go
-	// used to store the memory address
+	// & direction operator
+	// * dereference operator
 	v := 19
 	var p1 *int
 	var p2 = new(int)
 	p3 := &v
 	fmt.Printf("p1: %T , p2 : %T and p3: %T\n", p1, p2, p3)
 	fmt.Printf("p3: %d \n", *p3) // dereference operator
+	var testPointer = 19
+	increase(&testPointer) // send pointer
+	fmt.Println("El valor de v es:", testPointer)
 
 	// CHANNEL AND CONCURRENCY
 	c := make(chan string)

@@ -1,7 +1,8 @@
 package myPackage
 
 type MyStructPublic struct {
-	name string
+	Name string
+	Age  int8
 }
 
 type myStructPrivate struct {
