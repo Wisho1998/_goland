@@ -133,7 +133,8 @@ func main() {
 
 	// CHANNEL AND CONCURRENCY
 	// channels: allows communication between routines
-	c := make(chan string, 1)
+	// c := make(chan string) // Unbuffered
+	c := make(chan string, 1) // Buffered
 	go sayWithChannel("Chan | Hello", c)
 	fmt.Println(<-c)
 	go func(text string, c chan<- string) { // anonymous function
