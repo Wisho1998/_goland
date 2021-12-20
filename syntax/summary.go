@@ -4,13 +4,22 @@ import (
 	"fmt"
 	"github.com/Wisho1998/testAccessModifier/myPackage"
 	"math/rand"
-	"time"
+	"sync"
 )
 
 func getRandom() int {
 	min := 1
 	max := 100
 	return rand.Intn(max-min) + min
+}
+
+func sayWithWaitGroup(text string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	fmt.Println(text)
+}
+
+func sayWithChannel(text string, c chan<- string) {
+	c <- text
 }
 
 // Increase receive an int pointer type
@@ -123,11 +132,22 @@ func main() {
 	fmt.Println("El valor de v es:", testPointer)
 
 	// CHANNEL AND CONCURRENCY
-	c := make(chan string)
-	go func() { // anonymous function
-		fmt.Println("Starting function")
-		time.Sleep(5 * time.Second)
-		c <- "end channel"
-	}()
-	<-c
+	// channels: allows communication between routines
+	c := make(chan string, 1)
+	go sayWithChannel("Chan | Hello", c)
+	fmt.Println(<-c)
+	go func(text string, c chan<- string) { // anonymous function
+		c <- text
+	}("Chan | World", c)
+	fmt.Println(<-c)
+
+	// wait group
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go sayWithWaitGroup("wg | World", &wg)
+	go func(text string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		fmt.Println(text)
+	}("wg | Hello", &wg)
+	wg.Wait()
 }
