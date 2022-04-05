@@ -48,21 +48,28 @@ func main() {
 	// https://codingornot.com/02-go-to-go-sintaxis-tipo-de-datos-y-palabras-reservadas
 
 	//ARRAYS
-	// fixed size
+	// fixed size: type data array is defined for length too
 	var myArray [4]bool
 	fmt.Println("ARRAY ", myArray, len(myArray), cap(myArray))
 
 	//SLICES
 	// dynamic size
 	mySlice := []int{1, 2, 3}
+	mySlice2 := make([]int,4)
 	mySlice = append(mySlice, 4)
 	mySlice = append(mySlice, 5)
 	fmt.Println("SLICE and slicing slice[min:max]", mySlice[2:len(mySlice)-1])
+	fmt.Println("Other form to declare and initialize a slice", mySlice2)
 
 	//MAPS
 	// associative, efficient search, untidy iterative
 	myMap := make(map[string]string)
-	myMap["name"] = "Wilmer"
+	myMap["backend1"] = "Wilmer"
+	myMap["backend2"] = "Miguel1"
+	myMap["fronted1"] = "Miguel2"
+	myMap["fronted2"] = "Edgar"
+	myMap["full1"] = "Henry"
+	delete(myMap, "backend1")
 	fmt.Println("MAP", myMap)
 
 	//LOOPS
