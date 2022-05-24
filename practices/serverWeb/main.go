@@ -1,6 +1,16 @@
 package main
 
+import (
+	"fmt"
+	"log"
+	"net/http"
+)
+
+const httpAddr = ":8000"
+
 func main() {
-	server := NewServer(":3000")
-	_ = server.Listen()
+ fmt.Println("Server running on", httpAddr)
+ mux := http.NewServeMux()
+
+ log.Fatal(http.ListenAndServe(httpAddr))
 }

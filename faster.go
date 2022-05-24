@@ -2,23 +2,45 @@ package main
 
 import (
 	"fmt"
-	"time"
+	"math/rand"
 )
 
+func doSomething(x int) int {
+	return x
+}
+
+func manageTraffic(entrada <-chan int, salida chan<- int) {
+	for c := range entrada {
+		salida <- doSomething(c)
+	}
+	close(salida)
+}
+
 func main() {
-	sema := make(chan struct{}, 3)
-	canal := make(chan int)
+	numbers := make(chan int)
+	doubles := make(chan int)
+	//traffic := make(chan struct{})
 
-	for i := 0; i < 10000; i++ {
-		go func(i int) {
-			sema <- struct{}{} // adquiere un token
-			time.Sleep(1 * time.Second)
-			canal <- i
-			<-sema // devuelve el token
-		}(i)
-	}
+	go publicar(numbers)
+	go manageTraffic(numbers, doubles)
+	suscribir(doubles)
+}
 
-	for i := 0; i < 10000; i++ {
-		fmt.Printf("%v ",<-canal)
+func suscribir(conTotal <-chan int) {
+	for c := range conTotal {
+		fmt.Printf("%#v ", c)
 	}
+}
+
+func publicar(output chan<- int) {
+	for i := 0; i < 1000; i++ {
+		output <- getRandom()
+	}
+	close(output)
+}
+
+func getRandom() int {
+	min := 1
+	max := 3
+	return rand.Intn(max-min) + min
 }
