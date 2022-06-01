@@ -9,12 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 	"reflect"
 	"time"
 )
 
-var tOID = reflect.TypeOf(primitive.ObjectID{})
 var tDateTime = reflect.TypeOf(primitive.DateTime(0))
 
 func dateTimeEncodeValue(ec bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
@@ -26,30 +26,21 @@ func dateTimeEncodeValue(ec bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val 
 	return vw.WriteString(into)
 }
 
-func objectIDEncodeValue(ec bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
-	if !val.IsValid() || val.Type() != tOID {
-		return bsoncodec.ValueEncoderError{Name: "ObjectIDEncodeValue", Types: []reflect.Type{tOID}, Received: val}
-	}
-	s := val.Interface().(primitive.ObjectID).Hex()
-	return vw.WriteString(s)
-}
-
 func createCustomRegistry() *bsoncodec.RegistryBuilder {
 	var primitiveCodecs bson.PrimitiveCodecs
 	rb := bsoncodec.NewRegistryBuilder()
 	bsoncodec.DefaultValueEncoders{}.RegisterDefaultEncoders(rb)
 	bsoncodec.DefaultValueDecoders{}.RegisterDefaultDecoders(rb)
 	rb.RegisterTypeEncoder(tDateTime, bsoncodec.ValueEncoderFunc(dateTimeEncodeValue))
-	rb.RegisterTypeEncoder(tOID, bsoncodec.ValueEncoderFunc(objectIDEncodeValue))
 	primitiveCodecs.RegisterPrimitiveCodecs(rb)
 	return rb
 }
 
 func main() {
 	var result struct {
-		Id   string
+		Id   string `bson:"_id"`
 		Name string
-		Date string
+		Date timestamppb.Timestamp
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

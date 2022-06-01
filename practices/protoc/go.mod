@@ -3,12 +3,12 @@ module testProtoc
 go 1.17
 
 require (
-	github.com/golang/protobuf v1.5.2
 	go.mongodb.org/mongo-driver v1.9.1
 	google.golang.org/protobuf v1.28.0
 )
 
 require (
+	github.com/favadi/protoc-go-inject-tag v1.3.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
