@@ -1,12 +1,11 @@
 syntax = "proto3";
-
 package pb;
+option go_package = "./pb";
 
-option go_package = "../pb";
-
-import "proto/objectid.proto";
+import "proto/mongo/objectid.proto";
 
 message User{
   ObjectId id = 1; // @gotags: bson:"_id"
   string name = 2;
+  repeated ObjectId nested_id = 3;
 }

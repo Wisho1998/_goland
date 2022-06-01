@@ -9,10 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 	"reflect"
-	"strings"
 	"testProtoc/pb"
 	"time"
 )
@@ -66,7 +64,16 @@ func main() {
 	collection := client.Database("dbtest").Collection("general")
 
 	//INSERT
-	newDocument := &pb.User{Id: pb.NewObjectId(primitive.NewObjectID()), Name: "insertion"}
+	newDocument := &pb.User{
+		Id:   pb.NewObjectId(primitive.NewObjectID()),
+		Name: "insertion",
+		NestedId: []*pb.ObjectId{
+			pb.NewObjectId(primitive.NewObjectID()),
+			pb.NewObjectId(primitive.NewObjectID()),
+			pb.NewObjectId(primitive.NewObjectID()),
+			pb.NewObjectId(primitive.NewObjectID()),
+		},
+	}
 	//bsonConverted := ConvertStructToBSON(newDocument)
 	//fmt.Printf("- new document: \n %v \n- bson converted: \n%v \n\n", newDocument, bsonConverted)
 	insertOneResult, err := collection.InsertOne(ctx, newDocument)
@@ -84,65 +91,11 @@ func main() {
 	if findErr != nil {
 		log.Fatal(findErr)
 	}
-	fmt.Println(result)
+	fmt.Println(result.NestedId)
+
+	for _, id := range result.GetNestedId() {
+		fmt.Println(id.GetHexID())
+	}
 
 	cancel()
-}
-
-func ConvertStructToBSON(data interface{}) bson.M {
-	const numDefaultProp = 3
-	bsonData := bson.M{}
-	bytes, _ := bson.Marshal(data)
-	_ = bson.Unmarshal(bytes, &bsonData)
-
-	val := reflect.ValueOf(data)
-	if reflect.Value.IsNil(val) {
-		return bsonData
-	}
-	typeOfS := reflect.Indirect(val).Type()
-
-	result := bson.M{}
-	for i := numDefaultProp; i < len(bsonData)+numDefaultProp; i++ {
-		nameField := strings.ToLower(typeOfS.Field(i).Name)
-		valueField := reflect.Indirect(val).Field(i)
-		typeField := fmt.Sprintf("%T", valueField.Interface())
-		if typeField == "string" &&
-			strings.Contains(nameField, "id") &&
-			primitive.IsValidObjectID(valueField.String()) {
-			if nameField == "id" {
-				result["_id"], _ = primitive.ObjectIDFromHex(valueField.String())
-			} else {
-				result[nameField], _ = primitive.ObjectIDFromHex(valueField.String())
-			}
-		} else if typeField == "[]string" &&
-			strings.Contains(nameField, "id") &&
-			containsIsValidObjectID(valueField) {
-			ids := valueField.Slice(0, valueField.Len()).Interface().([]string)
-			bsonA := bson.A{}
-			for _, id := range ids {
-				objectId, _ := primitive.ObjectIDFromHex(id)
-				bsonA = append(bsonA, objectId)
-			}
-			result[nameField] = bsonA
-		} else if strings.Contains(typeField, "*pb") {
-			result[nameField] = ConvertStructToBSON(valueField.Interface())
-		} else {
-			if typeField == "*timestamppb.Timestamp" {
-				result[nameField] = valueField.Interface().(*timestamppb.Timestamp).AsTime()
-			} else {
-				result[nameField] = valueField.Interface()
-			}
-		}
-	}
-	return result
-}
-
-func containsIsValidObjectID(valueField reflect.Value) bool {
-	ids := valueField.Slice(0, valueField.Len()).Interface().([]string)
-	for _, id := range ids {
-		if !primitive.IsValidObjectID(id) {
-			return false
-		}
-	}
-	return true
 }
