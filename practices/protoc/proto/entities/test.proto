@@ -6,8 +6,8 @@ import "proto/mongo/objectid.proto";
 import "google/protobuf/timestamp.proto";
 
 message User{
-  ObjectId id = 1; // @gotags: bson:"_id"
+  string id = 1; // @gotags: bson:"_id"
   string name = 2;
   google.protobuf.Timestamp date = 3;
-  repeated ObjectId nested_id = 4;
+  repeated string nested_id = 4;
 }

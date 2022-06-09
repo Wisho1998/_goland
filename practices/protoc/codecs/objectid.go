@@ -1,50 +1,47 @@
 package codecs
 
 import (
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
-	"testProtocBsonCoders/pb"
 )
 
-var (
-	ObjectIDRegistry = reflect.TypeOf(&pb.ObjectId{})
-	ObjectIDCodecRef = &objectIDCodec{}
+var tOID = reflect.TypeOf("")
 
-	ObjectIDMongoType = reflect.TypeOf(primitive.ObjectID{})
-)
-
-// objectIDCodec is codec for Protobuf ObjectId
-type objectIDCodec struct {
+func ObjectIDEncodeValue(ec bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+	if !val.IsValid() || val.Type() != tOID {
+		return bsoncodec.ValueEncoderError{Name: "ObjectIDEncodeValue", Types: []reflect.Type{tOID}, Received: val}
+	}
+	s := val.Interface().(string)
+	isValidObjectID := primitive.IsValidObjectID(s)
+	if isValidObjectID {
+		id, err := primitive.ObjectIDFromHex(s)
+		if err != nil {
+			return err
+		}
+		return vw.WriteObjectID(id)
+	}
+	return vw.WriteString(s)
 }
 
-func (e *objectIDCodec) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
-	v := val.Interface().(*pb.ObjectId)
-	id, err := primitive.ObjectIDFromHex(v.Value)
-	if err != nil {
-		return err
+func ObjectIDDecodeValue(_ bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+	// this is the function when we read the datetime format
+	if vr.Type() == bson.TypeObjectID {
+		readOID, err := vr.ReadObjectID()
+		if err != nil {
+			return err
+		}
+		oid := readOID.Hex()
+		val.Set(reflect.ValueOf(oid))
+	} else {
+		readString, err := vr.ReadString()
+		if err != nil {
+			return err
+		}
+		val.Set(reflect.ValueOf(readString))
 	}
-	enc, err := ectx.LookupEncoder(ObjectIDMongoType)
-	if err != nil {
-		return err
-	}
-	return enc.EncodeValue(ectx, vw, reflect.ValueOf(id))
-}
 
-func (e *objectIDCodec) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
-	enc, err := ectx.LookupDecoder(ObjectIDMongoType)
-	if err != nil {
-		return err
-	}
-	var id primitive.ObjectID
-	if err = enc.DecodeValue(ectx, vr, reflect.ValueOf(&id).Elem()); err != nil {
-		return err
-	}
-	oid := pb.NewObjectId(id)
-	if err != nil {
-		return err
-	}
-	val.Set(reflect.ValueOf(oid))
 	return nil
 }

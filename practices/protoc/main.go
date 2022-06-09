@@ -27,14 +27,14 @@ func main() {
 
 	//INSERT
 	newDocument := &pb.User{
-		Id:   pb.NewObjectId(primitive.NewObjectID()),
+		Id:   primitive.NewObjectID().Hex(),
 		Date: timestamppb.Now(),
 		Name: "insertion",
-		NestedId: []*pb.ObjectId{
-			pb.NewObjectId(primitive.NewObjectID()),
-			pb.NewObjectId(primitive.NewObjectID()),
-			pb.NewObjectId(primitive.NewObjectID()),
-			pb.NewObjectId(primitive.NewObjectID()),
+		NestedId: []string{
+			primitive.NewObjectID().Hex(),
+			primitive.NewObjectID().Hex(),
+			primitive.NewObjectID().Hex(),
+			primitive.NewObjectID().Hex(),
 		},
 	}
 
@@ -53,7 +53,6 @@ func main() {
 	if findErr != nil {
 		log.Fatal(findErr)
 	}
-	fmt.Println(result.Date.AsTime().UTC())
-
+	fmt.Println(result)
 	cancel()
 }
