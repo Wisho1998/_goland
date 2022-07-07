@@ -8,26 +8,30 @@ import (
 	"reflect"
 )
 
-var tOID = reflect.TypeOf("")
+var stringType = reflect.TypeOf("")
+var ObjectIDCodecRef = &ObjectIDCodec{}
 
-func ObjectIDEncodeValue(ec bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
-	if !val.IsValid() || val.Type() != tOID {
-		return bsoncodec.ValueEncoderError{Name: "ObjectIDEncodeValue", Types: []reflect.Type{tOID}, Received: val}
+type ObjectIDCodec struct{}
+
+// EncodeValue encodes Protobuf ObjectId value to BSON value
+func (e *ObjectIDCodec) EncodeValue(_ bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+	if !val.IsValid() || val.Type() != stringType {
+		return bsoncodec.ValueEncoderError{Name: "ObjectIDEncodeValue", Types: []reflect.Type{stringType}, Received: val}
 	}
-	s := val.Interface().(string)
-	isValidObjectID := primitive.IsValidObjectID(s)
-	if isValidObjectID {
-		id, err := primitive.ObjectIDFromHex(s)
+	v := val.Interface().(string)
+
+	if isValidObjectID := primitive.IsValidObjectID(v); isValidObjectID {
+		id, err := primitive.ObjectIDFromHex(v)
 		if err != nil {
 			return err
 		}
 		return vw.WriteObjectID(id)
 	}
-	return vw.WriteString(s)
+	return vw.WriteString(v)
 }
 
-func ObjectIDDecodeValue(_ bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
-	// this is the function when we read the datetime format
+// DecodeValue decodes BSON value to ObjectId value
+func (e *ObjectIDCodec) DecodeValue(_ bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
 	if vr.Type() == bson.TypeObjectID {
 		readOID, err := vr.ReadObjectID()
 		if err != nil {
@@ -35,6 +39,12 @@ func ObjectIDDecodeValue(_ bsoncodec.DecodeContext, vr bsonrw.ValueReader, val r
 		}
 		oid := readOID.Hex()
 		val.Set(reflect.ValueOf(oid))
+	} else if vr.Type() == bson.TypeNull {
+		err := vr.ReadNull()
+		if err != nil {
+			return err
+		}
+		val.Set(reflect.ValueOf(""))
 	} else {
 		readString, err := vr.ReadString()
 		if err != nil {
@@ -42,6 +52,5 @@ func ObjectIDDecodeValue(_ bsoncodec.DecodeContext, vr bsonrw.ValueReader, val r
 		}
 		val.Set(reflect.ValueOf(readString))
 	}
-
 	return nil
 }

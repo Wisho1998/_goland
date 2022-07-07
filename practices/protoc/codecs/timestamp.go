@@ -2,6 +2,7 @@ package codecs
 
 import (
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -9,39 +10,43 @@ import (
 	"time"
 )
 
-var (
-	TimestampRegistry = reflect.TypeOf(&timestamp.Timestamp{})
-	TimestampCodecRef = &timestampCodec{}
+var timeStampType = reflect.TypeOf(&timestamppb.Timestamp{})
+var TimeCodecRef = &TimeCodec{}
 
-	DateMongoType = reflect.TypeOf(time.Time{})
-)
-
-// timestampCodec is codec for Protobuf Timestamp
-type timestampCodec struct {
-}
+type TimeCodec struct{}
 
 // EncodeValue encodes Protobuf Timestamp value to BSON value
-func (e *timestampCodec) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
-	v := val.Interface().(*timestamp.Timestamp)
-	t := time.Unix(v.Seconds, int64(v.Nanos))
-	enc, err := ectx.LookupEncoder(DateMongoType)
-	if err != nil {
-		return err
+func (e *TimeCodec) EncodeValue(_ bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+	if !val.IsValid() || val.Type() != timeStampType {
+		return bsoncodec.ValueEncoderError{Name: "ObjectIDEncodeValue", Types: []reflect.Type{timeStampType}, Received: val}
 	}
-	return enc.EncodeValue(ectx, vw, reflect.ValueOf(t.In(time.UTC)))
+
+	if val.IsNil() {
+		return vw.WriteNull()
+	}
+
+	v := val.Interface().(*timestamp.Timestamp)
+	t := v.AsTime()
+
+	return vw.WriteDateTime(t.UnixMilli())
 }
 
 // DecodeValue decodes BSON value to Timestamp value
-func (e *timestampCodec) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
-	enc, err := ectx.LookupDecoder(DateMongoType)
-	if err != nil {
-		return err
+func (e *TimeCodec) DecodeValue(_ bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+	if vr.Type() == bson.TypeDateTime {
+		readDatetime, err := vr.ReadDateTime()
+		if err != nil {
+			return err
+		}
+		ts := timestamppb.New(time.UnixMilli(readDatetime))
+		val.Set(reflect.ValueOf(ts))
+	} else {
+		err := vr.ReadNull()
+		if err != nil {
+			return err
+		}
+		var ts *timestamppb.Timestamp = nil
+		val.Set(reflect.ValueOf(ts))
 	}
-	var t time.Time
-	if err = enc.DecodeValue(ectx, vr, reflect.ValueOf(&t).Elem()); err != nil {
-		return err
-	}
-	ts := timestamppb.New(t.In(time.UTC))
-	val.Set(reflect.ValueOf(ts))
 	return nil
 }

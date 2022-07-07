@@ -2,12 +2,21 @@ syntax = "proto3";
 package pb;
 option go_package = "./pb";
 
-import "proto/mongo/objectid.proto";
+//import "proto/mongo/objectid.proto";
 import "google/protobuf/timestamp.proto";
 
 message User{
   string id = 1; // @gotags: bson:"_id"
   string name = 2;
-  google.protobuf.Timestamp date = 3;
-  repeated string nested_id = 4;
+  google.protobuf.Timestamp start = 3;
+  google.protobuf.Timestamp end = 4;
+  string other_nested_id= 5;
+  string nested_id = 6;
+  Nested nested = 7;
+  repeated string nested_ids = 8;
+}
+
+message Nested{
+  string id = 1; // @gotags: bson:"_id"
+  string name = 2;
 }

@@ -6,10 +6,8 @@ import (
 
 // Register registers Google protocol buffers types codecs
 func Register(rb *bsoncodec.RegistryBuilder) *bsoncodec.RegistryBuilder {
-	rb.RegisterTypeEncoder(tOID, bsoncodec.ValueEncoderFunc(ObjectIDEncodeValue))
-	rb.RegisterTypeDecoder(tOID, bsoncodec.ValueDecoderFunc(ObjectIDDecodeValue))
-
-	rb.RegisterCodec(TimestampRegistry, TimestampCodecRef)
+	rb.RegisterCodec(stringType, ObjectIDCodecRef)
+	rb.RegisterCodec(timeStampType, TimeCodecRef)
 
 	return rb
 }

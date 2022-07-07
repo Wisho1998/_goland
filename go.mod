@@ -1,3 +1,3 @@
-module github.com/Wisho1998/modGenerics
+module faster
 
-go 1.17
+go 1.18
